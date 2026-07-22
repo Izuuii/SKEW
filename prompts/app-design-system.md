@@ -16,7 +16,7 @@ Implement the core design system for **biasly** based on the provided UI referen
 1. **Typography**: Replace default Geist font setup in `app/layout.tsx` with Google Font `Poppins` (`weights: ['400', '500', '600', '700']`) as specified in the typography guide.
 2. **Color Palette Tokens**:
    - Primary Text: `#0D0D0F`
-   - Secondary Text: `#6B7280`
+- Secondary Text: `#6B7280`
    - Surface: `#F6F6F6`
    - Left Bias (Semantic): `#B42318`
    - Center (Semantic): `#E5E7EB`

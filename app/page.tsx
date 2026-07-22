@@ -1,478 +1,488 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
 import {
   Menu,
-  Search,
-  Bookmark,
-  Clock,
-  Info,
+  ChevronLeft,
+  ChevronRight,
+  Globe,
   Share2,
-  ExternalLink,
-  Calendar,
-  TrendingUp,
-  Tag,
-  User,
-  Bell,
-  SlidersHorizontal,
-  CheckCircle2,
-  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
-import { BiasMeter } from "@/components/ui/bias-meter";
 import { ArticleCard } from "@/components/ui/article-card";
 
-export default function Home() {
-  return (
-    <div className="min-h-screen bg-[#F0F0F0] text-[#0D0D0F] font-sans pb-12">
-      {/* Top Header Container */}
-      <div className="max-w-[1280px] mx-auto px-6 py-8">
-        <header className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-[#E5E7EB] pb-6 mb-8 gap-4">
-          <div>
-            <h1 className="text-[36px] font-bold tracking-tight text-[#0D0D0F]">
-              biasly <span className="text-[20px] font-normal text-[#6B7280]">News</span>
-            </h1>
-            <p className="text-[14px] text-[#6B7280] mt-1">
-              Balanced news coverage, powered by AI.
-            </p>
-          </div>
-          <div className="text-left md:text-right text-[12px] text-[#6B7280]">
-            <span className="bg-[#E5E7EB] px-2.5 py-1 rounded-full font-medium text-[#0D0D0F] inline-block mb-1">
-              Design System v1.0
-            </span>
-            <p>June 1, 2026</p>
-          </div>
-        </header>
+// Mock data for the 12 Top News articles matching Skew Home spec
+const articlesData = [
+  {
+    id: 1,
+    imageUrl:
+      "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop",
+    category: "Politics",
+    location: "United States",
+    title: "Trump Sends Iran Revised Peace Proposal With Tougher Terms: Report",
+    leftPercentage: 20,
+    centerPercentage: 31,
+    rightPercentage: 49,
+    sourcesCount: 12,
+  },
+  {
+    id: 2,
+    imageUrl:
+      "https://images.unsplash.com/photo-1596368708356-6e1e1025ee73?q=80&w=800&auto=format&fit=crop",
+    category: "Health",
+    location: "United States",
+    title:
+      "Researchers Make Case for Grapes as a 'Superfood' After Review of Health Evidence",
+    leftPercentage: 18,
+    centerPercentage: 42,
+    rightPercentage: 40,
+    sourcesCount: 7,
+  },
+  {
+    id: 3,
+    imageUrl:
+      "https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=800&auto=format&fit=crop",
+    category: "Science",
+    location: "Switzerland",
+    title:
+      "CERN Finds High-Significance Hint of Physics Beyond Standard Model",
+    leftPercentage: 16,
+    centerPercentage: 62,
+    rightPercentage: 22,
+    sourcesCount: 8,
+  },
+  {
+    id: 4,
+    imageUrl:
+      "https://images.unsplash.com/photo-1577495508048-b635879837f1?q=80&w=800&auto=format&fit=crop",
+    category: "World",
+    location: "Nicaragua",
+    title:
+      "Indigenous Leader Brooklyn Rivera Dies in Nicaragua After Nearly 3 Years of Detention",
+    leftPercentage: 54,
+    centerPercentage: 28,
+    rightPercentage: 18,
+    sourcesCount: 63,
+  },
+  {
+    id: 5,
+    imageUrl:
+      "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=800&auto=format&fit=crop",
+    category: "World",
+    location: "Middle East",
+    title:
+      "UN Security Council to Hold Emergency Meeting as Israel Pushes Deeper into Lebanon",
+    leftPercentage: 22,
+    centerPercentage: 35,
+    rightPercentage: 43,
+    sourcesCount: 15,
+  },
+  {
+    id: 6,
+    imageUrl:
+      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop",
+    category: "Business",
+    location: "Global",
+    title:
+      "Oil Prices Dip as OPEC+ Considers Output Increase Amid Weak Demand",
+    leftPercentage: 22,
+    centerPercentage: 50,
+    rightPercentage: 28,
+    sourcesCount: 11,
+  },
+  {
+    id: 7,
+    imageUrl:
+      "https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=800&auto=format&fit=crop",
+    category: "Technology",
+    location: "United States",
+    title:
+      "SpaceX Launches Starship Test Flight in Milestone for Mars Program",
+    leftPercentage: 12,
+    centerPercentage: 45,
+    rightPercentage: 49,
+    sourcesCount: 9,
+  },
+  {
+    id: 8,
+    imageUrl:
+      "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=800&auto=format&fit=crop",
+    category: "Business",
+    location: "United States",
+    title:
+      "Apple Unveils AI-Powered Features Across iPhone, iPad and Mac",
+    leftPercentage: 15,
+    centerPercentage: 40,
+    rightPercentage: 45,
+    sourcesCount: 10,
+  },
+  {
+    id: 9,
+    imageUrl:
+      "https://images.unsplash.com/photo-1504386106331-3e4e71712b38?q=80&w=800&auto=format&fit=crop",
+    category: "Climate",
+    location: "Global",
+    title:
+      "2025 on Track to Be Among Top 3 Hottest Years, EU Climate Service Says",
+    leftPercentage: 33,
+    centerPercentage: 34,
+    rightPercentage: 33,
+    sourcesCount: 14,
+  },
+  {
+    id: 10,
+    imageUrl:
+      "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=800&auto=format&fit=crop",
+    category: "Economy",
+    location: "United States",
+    title:
+      "Fed Holds Rates Steady, Signals Caution on Inflation and Growth Outlook",
+    leftPercentage: 30,
+    centerPercentage: 45,
+    rightPercentage: 25,
+    sourcesCount: 13,
+  },
+  {
+    id: 11,
+    imageUrl:
+      "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=800&auto=format&fit=crop",
+    category: "Soccer",
+    location: "Europe",
+    title:
+      "Real Madrid Win Champions League After Comeback Victory in Final",
+    leftPercentage: 10,
+    centerPercentage: 20,
+    rightPercentage: 70,
+    sourcesCount: 26,
+  },
+  {
+    id: 12,
+    imageUrl:
+      "https://images.unsplash.com/photo-1599818816822-2632b498fbe8?q=80&w=800&auto=format&fit=crop",
+    category: "Environment",
+    location: "Canada",
+    title:
+      "Wildfires Force Thousands to Evacuate Across Western Canada",
+    leftPercentage: 27,
+    centerPercentage: 33,
+    rightPercentage: 40,
+    sourcesCount: 17,
+  },
+];
 
-        {/* 12-Column Grid Layout matching UI Spec */}
-        <main className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* BRAND CARD (Cols 1-4) */}
-          <section className="md:col-span-4 bg-white p-6 rounded-[12px] border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] flex flex-col justify-between">
-            <div>
-              <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-6">
-                BRAND
-              </h2>
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <h1 className="text-[48px] font-bold tracking-tight text-[#0D0D0F] leading-none mb-1">
+const topicFilterChips = [
+  "World Cup",
+  "IPL",
+  "Social Media",
+  "Business & Markets",
+  "Health & Medicine",
+  "Soccer",
+  "Artificial Intelligence",
+  "Arsenal FC",
+  "Extreme Weather and Disasters",
+];
+
+export default function Home() {
+  const [activeTab, setActiveTab] = useState<string>("Home");
+  const [themeMode, setThemeMode] = useState<"Light" | "Dark" | "Auto">("Light");
+  const [activeChip, setActiveChip] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
+  return (
+    <div className="min-h-screen bg-[#F0F0F0] text-[#0D0D0F] font-sans flex flex-col">
+      {/* 1. TOP UTILITY HEADER BAR */}
+      <div className="bg-[#EAEAEA] border-b border-[#E5E7EB] text-[11px] text-[#6B7280]">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-1 sm:py-0 sm:h-7 flex flex-wrap items-center justify-between gap-y-1 gap-x-2">
+          {/* Left utility elements */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="hidden md:inline hover:text-[#0D0D0F] cursor-pointer">
+              Browser Extension
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="hidden xs:inline">Theme:</span>
+              {(["Light", "Dark", "Auto"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setThemeMode(mode)}
+                  className={`hover:text-[#0D0D0F] cursor-pointer px-1 py-0.5 rounded ${
+                    themeMode === mode ? "text-[#0D0D0F] font-medium bg-[#DDD]" : "text-[#6B7280]"
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Right utility elements */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="hidden lg:inline">Monday, June 1, 2026</span>
+            <button type="button" className="hidden sm:inline hover:text-[#0D0D0F] cursor-pointer">
+              Set Location
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-1 hover:text-[#0D0D0F] cursor-pointer font-medium"
+            >
+              <Globe className="w-3 h-3 stroke-[2]" />
+              <span className="truncate max-w-[130px] sm:max-w-none">International Edition</span>
+              <span className="text-[9px]">▼</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. MAIN NAVIGATION HEADER */}
+      <header className="bg-[#F0F0F0] border-b border-[#E5E7EB] sticky top-0 z-20">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+          {/* Left section: Hamburger Menu & Logo */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              aria-label="Toggle Menu"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-1.5 text-[#0D0D0F] hover:bg-[#E5E7EB] rounded-md transition-colors cursor-pointer"
+            >
+              <Menu className="w-5 h-5 stroke-[2]" />
+            </button>
+
+            <Link href="/" className="flex items-center gap-1.5 select-none">
+              <span className="text-[20px] sm:text-[22px] font-bold tracking-tight text-[#0D0D0F]">
+                biasly
+              </span>
+              <span className="text-[20px] sm:text-[22px] font-normal text-[#0D0D0F]">
+                News
+              </span>
+            </Link>
+          </div>
+
+          {/* Center Navigation Tabs (Desktop) */}
+          <nav className="hidden md:flex items-center gap-8 text-[14px]">
+            {[
+              { label: "Home", hasBadge: false },
+              { label: "For You", hasBadge: true },
+              { label: "Local", hasBadge: false },
+              { label: "Blindspot", hasBadge: false },
+            ].map((nav) => (
+              <button
+                key={nav.label}
+                type="button"
+                onClick={() => setActiveTab(nav.label)}
+                className={`relative py-4 transition-colors cursor-pointer ${
+                  activeTab === nav.label
+                    ? "font-semibold text-[#0D0D0F]"
+                    : "text-[#6B7280] hover:text-[#0D0D0F]"
+                }`}
+              >
+                <span className="inline-flex items-center gap-0.5">
+                  {nav.label}
+                  {nav.hasBadge && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#B42318] inline-block -mt-2"></span>
+                  )}
+                </span>
+                {activeTab === nav.label && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#0D0D0F]" />
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button
+              variant="primary"
+              className="bg-[#0D0D0F] text-white hover:bg-[#0D0D0F]/90 text-[12px] sm:text-[13px] font-medium px-3 sm:px-4 py-1.5 rounded-[6px] h-8 sm:h-9"
+            >
+              Subscribe
+            </Button>
+            <Button
+              variant="secondary"
+              outline
+              className="border border-[#E5E7EB] bg-white text-[#0D0D0F] hover:bg-[#F6F6F6] text-[12px] sm:text-[13px] font-medium px-3 sm:px-4 py-1.5 rounded-[6px] h-8 sm:h-9"
+            >
+              Login
+            </Button>
+          </div>
+        </div>
+
+        {/* Collapsible Mobile Navigation Drawer */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-[#E5E7EB] bg-white px-4 py-3 space-y-2 shadow-md">
+            {[
+              { label: "Home", hasBadge: false },
+              { label: "For You", hasBadge: true },
+              { label: "Local", hasBadge: false },
+              { label: "Blindspot", hasBadge: false },
+            ].map((nav) => (
+              <button
+                key={nav.label}
+                type="button"
+                onClick={() => {
+                  setActiveTab(nav.label);
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-[14px] rounded-md transition-colors ${
+                  activeTab === nav.label
+                    ? "font-semibold bg-[#F6F6F6] text-[#0D0D0F]"
+                    : "text-[#6B7280] hover:bg-[#F9F9F9] hover:text-[#0D0D0F]"
+                }`}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  {nav.label}
+                  {nav.hasBadge && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#B42318] inline-block"></span>
+                  )}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </header>
+
+      {/* 3. CATEGORY / TOPICS HORIZONTAL FILTER BAR */}
+      <div className="border-b border-[#E5E7EB] bg-[#F0F0F0]">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            aria-label="Previous Topics"
+            className="shrink-0 text-[#6B7280] hover:text-[#0D0D0F] p-1 cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4 stroke-[2]" />
+          </button>
+
+          <div className="flex items-center gap-2 overflow-x-auto py-0.5 no-scrollbar scroll-smooth">
+            {topicFilterChips.map((topic) => (
+              <Chip
+                key={topic}
+                label={topic}
+                showPlus={true}
+                active={activeChip === topic}
+                onClick={() => setActiveChip(activeChip === topic ? null : topic)}
+                className="shrink-0 bg-white/80 hover:bg-white text-[13px] text-[#0D0D0F] border-[#E5E7EB] py-1 px-3"
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            aria-label="Next Topics"
+            className="shrink-0 text-[#6B7280] hover:text-[#0D0D0F] p-1 cursor-pointer"
+          >
+            <ChevronRight className="w-4 h-4 stroke-[2]" />
+          </button>
+        </div>
+      </div>
+
+      {/* 4. MAIN CONTENT: TOP NEWS GRID */}
+      <main className="max-w-[1280px] mx-auto px-4 sm:px-6 py-8 flex-1 w-full">
+        <h1 className="text-[28px] sm:text-[32px] font-bold text-[#0D0D0F] tracking-tight mb-6">
+          Top News
+        </h1>
+
+        {/* 3-Column Responsive Grid matching Skew Home */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articlesData.map((article) => (
+            <ArticleCard
+              key={article.id}
+              imageUrl={article.imageUrl}
+              category={article.category}
+              location={article.location}
+              title={article.title}
+              leftPercentage={article.leftPercentage}
+              centerPercentage={article.centerPercentage}
+              rightPercentage={article.rightPercentage}
+              sourcesCount={article.sourcesCount}
+              variant="grid"
+            />
+          ))}
+        </div>
+      </main>
+
+      {/* 5. MULTI-COLUMN DARK FOOTER */}
+      <footer className="bg-[#1E1E22] text-white pt-12 pb-8 mt-auto">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-zinc-700/60">
+            {/* Col 1: Brand & Tagline */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[22px] font-bold tracking-tight text-white">
                   biasly
-                </h1>
-                <span className="text-[24px] font-semibold text-[#0D0D0F] mb-6">
+                </span>
+                <span className="text-[22px] font-normal text-white">
                   News
                 </span>
-                <p className="text-[14px] text-[#6B7280] max-w-[220px]">
-                  Balanced news coverage, powered by AI.
-                </p>
               </div>
-            </div>
-            <div className="border-t border-[#E5E7EB] pt-4 text-center text-[12px] text-[#6B7280]">
-              biasly design guidelines
-            </div>
-          </section>
-
-          {/* TYPOGRAPHY CARD (Cols 5-12) */}
-          <section className="md:col-span-8 bg-white p-6 rounded-[12px] border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-            <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-4">
-              TYPOGRAPHY
-            </h2>
-            <div className="mb-4">
-              <span className="text-[12px] font-medium text-[#6B7280]">FONT FAMILY</span>
-              <h3 className="text-[28px] font-bold text-[#0D0D0F]">Poppins</h3>
-              <p className="text-[13px] text-[#6B7280]">
-                Poppins is a modern geometric sans-serif typeface that ensures clarity and excellent readability.
+              <p className="text-[13px] text-zinc-400 max-w-[220px] leading-[1.5]">
+                Balanced news coverage powered by AI.
               </p>
             </div>
 
-            {/* Typography Spec Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-[13px]">
-                <thead>
-                  <tr className="border-b border-[#E5E7EB] text-[#6B7280] text-[11px] font-semibold uppercase">
-                    <th className="pb-2">STYLE</th>
-                    <th className="pb-2">SAMPLE</th>
-                    <th className="pb-2">SIZE</th>
-                    <th className="pb-2">WEIGHT</th>
-                    <th className="pb-2">LINE HEIGHT</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E5E7EB]/60">
-                  <tr>
-                    <td className="py-2.5 font-bold text-[14px]">H1</td>
-                    <td className="py-2.5 text-[20px] font-bold truncate max-w-[160px]">Page / Screen Title</td>
-                    <td className="py-2.5 text-[#6B7280]">32px</td>
-                    <td className="py-2.5 text-[#6B7280]">Bold</td>
-                    <td className="py-2.5 text-[#6B7280]">1.2</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 font-semibold text-[14px]">H2</td>
-                    <td className="py-2.5 text-[18px] font-semibold truncate max-w-[160px]">Section Title</td>
-                    <td className="py-2.5 text-[#6B7280]">24px</td>
-                    <td className="py-2.5 text-[#6B7280]">SemiBold</td>
-                    <td className="py-2.5 text-[#6B7280]">1.3</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 font-semibold text-[14px]">H3</td>
-                    <td className="py-2.5 text-[16px] font-semibold truncate max-w-[160px]">Card / Module Title</td>
-                    <td className="py-2.5 text-[#6B7280]">20px</td>
-                    <td className="py-2.5 text-[#6B7280]">SemiBold</td>
-                    <td className="py-2.5 text-[#6B7280]">1.3</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 font-medium text-[14px]">H4</td>
-                    <td className="py-2.5 text-[14px] font-medium truncate max-w-[160px]">Subheading</td>
-                    <td className="py-2.5 text-[#6B7280]">16px</td>
-                    <td className="py-2.5 text-[#6B7280]">Medium</td>
-                    <td className="py-2.5 text-[#6B7280]">1.4</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 text-[13px]">Body Large</td>
-                    <td className="py-2.5 text-[14px] truncate max-w-[160px]">Important content</td>
-                    <td className="py-2.5 text-[#6B7280]">16px</td>
-                    <td className="py-2.5 text-[#6B7280]">Regular</td>
-                    <td className="py-2.5 text-[#6B7280]">1.6</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 text-[13px]">Body Medium</td>
-                    <td className="py-2.5 text-[13px] truncate max-w-[160px]">Body text</td>
-                    <td className="py-2.5 text-[#6B7280]">14px</td>
-                    <td className="py-2.5 text-[#6B7280]">Regular</td>
-                    <td className="py-2.5 text-[#6B7280]">1.6</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 text-[13px]">Body Small</td>
-                    <td className="py-2.5 text-[12px] truncate max-w-[160px]">Supporting text</td>
-                    <td className="py-2.5 text-[#6B7280]">13px</td>
-                    <td className="py-2.5 text-[#6B7280]">Regular</td>
-                    <td className="py-2.5 text-[#6B7280]">1.6</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 text-[12px]">Caption</td>
-                    <td className="py-2.5 text-[11px] truncate max-w-[160px]">Labels, meta text</td>
-                    <td className="py-2.5 text-[#6B7280]">11px</td>
-                    <td className="py-2.5 text-[#6B7280]">Regular</td>
-                    <td className="py-2.5 text-[#6B7280]">1.4</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* COLORS CARD (Cols 1-4) */}
-          <section className="md:col-span-4 bg-white p-6 rounded-[12px] border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] space-y-6">
-            <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase">
-              COLORS
-            </h2>
-
-            {/* Primary Colors */}
+            {/* Col 2: Company Links */}
             <div>
-              <span className="text-[11px] font-semibold uppercase text-[#6B7280] block mb-2">PRIMARY</span>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div>
-                  <div className="h-14 bg-[#0D0D0F] rounded-[8px] border border-[#E5E7EB] mb-1"></div>
-                  <p className="text-[10px] font-medium">TEXT PRIMARY</p>
-                  <p className="text-[10px] text-[#6B7280]">#0D0D0F</p>
-                </div>
-                <div>
-                  <div className="h-14 bg-[#6B7280] rounded-[8px] mb-1"></div>
-                  <p className="text-[10px] font-medium">TEXT SECONDARY</p>
-                  <p className="text-[10px] text-[#6B7280]">#6B7280</p>
-                </div>
-                <div>
-                  <div className="h-14 bg-[#F6F6F6] border border-[#E5E7EB] rounded-[8px] mb-1"></div>
-                  <p className="text-[10px] font-medium">SURFACE</p>
-                  <p className="text-[10px] text-[#6B7280]">#F6F6F6</p>
-                </div>
-              </div>
+              <h4 className="text-[13px] font-semibold text-white uppercase tracking-wider mb-4">
+                Company
+              </h4>
+              <ul className="space-y-2.5 text-[13px] text-zinc-400">
+                {["About", "Careers", "Press", "Contact"].map((item) => (
+                  <li key={item}>
+                    <a href={`#${item.toLowerCase()}`} className="hover:text-white transition-colors">
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            {/* Semantic Colors */}
+            {/* Col 3: Help Links */}
             <div>
-              <span className="text-[11px] font-semibold uppercase text-[#6B7280] block mb-2">SEMANTIC</span>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div>
-                  <div className="h-14 bg-[#B42318] rounded-[8px] mb-1"></div>
-                  <p className="text-[10px] font-medium">LEFT BIAS</p>
-                  <p className="text-[10px] text-[#6B7280]">#B42318</p>
-                </div>
-                <div>
-                  <div className="h-14 bg-[#E5E7EB] border border-[#D1D5DB] rounded-[8px] mb-1"></div>
-                  <p className="text-[10px] font-medium">CENTER</p>
-                  <p className="text-[10px] text-[#6B7280]">#E5E7EB</p>
-                </div>
-                <div>
-                  <div className="h-14 bg-[#1D4ED8] rounded-[8px] mb-1"></div>
-                  <p className="text-[10px] font-medium">RIGHT BIAS</p>
-                  <p className="text-[10px] text-[#6B7280]">#1D4ED8</p>
-                </div>
-              </div>
+              <h4 className="text-[13px] font-semibold text-white uppercase tracking-wider mb-4">
+                Help
+              </h4>
+              <ul className="space-y-2.5 text-[13px] text-zinc-400">
+                {["Help Center", "Guides", "Privacy Policy", "Terms of Service"].map((item) => (
+                  <li key={item}>
+                    <a href={`#${item.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-white transition-colors">
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            {/* Neutrals */}
+            {/* Col 4: Connect / Socials */}
             <div>
-              <span className="text-[11px] font-semibold uppercase text-[#6B7280] block mb-2">NEUTRALS</span>
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div>
-                  <div className="h-12 bg-white border border-[#E5E7EB] rounded-[8px] mb-1"></div>
-                  <p className="text-[9px] font-medium">BG PRIMARY</p>
-                  <p className="text-[9px] text-[#6B7280]">#FFFFFF</p>
-                </div>
-                <div>
-                  <div className="h-12 bg-[#F0F0F0] border border-[#E5E7EB] rounded-[8px] mb-1"></div>
-                  <p className="text-[9px] font-medium">BG SECONDARY</p>
-                  <p className="text-[9px] text-[#6B7280]">#F0F0F0</p>
-                </div>
-                <div>
-                  <div className="h-12 bg-[#E5E7EB] rounded-[8px] mb-1"></div>
-                  <p className="text-[9px] font-medium">BORDER</p>
-                  <p className="text-[9px] text-[#6B7280]">#E5E7EB</p>
-                </div>
-                <div>
-                  <div className="h-12 bg-[#E5E7EB] rounded-[8px] mb-1"></div>
-                  <p className="text-[9px] font-medium">DIVIDER</p>
-                  <p className="text-[9px] text-[#6B7280]">#E5E7EB</p>
-                </div>
+              <h4 className="text-[13px] font-semibold text-white uppercase tracking-wider mb-4">
+                Connect
+              </h4>
+              <div className="flex items-center gap-4 text-zinc-400">
+                <a href="#twitter" aria-label="X Twitter" className="hover:text-white transition-colors">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </a>
+                <a href="#linkedin" aria-label="LinkedIn" className="hover:text-white transition-colors">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                  </svg>
+                </a>
+                <a href="#substack" aria-label="Substack" className="hover:text-white transition-colors">
+                  <Share2 className="w-4 h-4 stroke-[2]" />
+                </a>
+                <a href="#youtube" aria-label="YouTube" className="hover:text-white transition-colors">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
+                </a>
               </div>
             </div>
-          </section>
-
-          {/* UI ELEMENTS CARD (Cols 5-12) */}
-          <section className="md:col-span-8 bg-white p-6 rounded-[12px] border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] space-y-6">
-            <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase">
-              UI ELEMENTS
-            </h2>
-
-            {/* Buttons Matrix */}
-            <div>
-              <span className="text-[12px] font-semibold text-[#0D0D0F] block mb-3">BUTTONS</span>
-              <div className="overflow-x-auto">
-                <table className="w-full text-center text-[13px]">
-                  <thead>
-                    <tr className="text-[11px] text-[#6B7280] font-medium border-b border-[#E5E7EB] pb-2">
-                      <th className="text-left pb-2">Type</th>
-                      <th className="pb-2">Default</th>
-                      <th className="pb-2">Hover</th>
-                      <th className="pb-2">Outline</th>
-                      <th className="pb-2">Disabled</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E5E7EB]/40">
-                    <tr>
-                      <td className="py-2.5 text-left font-medium">Primary</td>
-                      <td className="py-2.5"><Button variant="primary">Button</Button></td>
-                      <td className="py-2.5"><Button variant="primary" className="bg-[#0D0D0F]/90">Button</Button></td>
-                      <td className="py-2.5"><Button variant="primary" outline>Button</Button></td>
-                      <td className="py-2.5"><Button variant="primary" disabled>Button</Button></td>
-                    </tr>
-                    <tr>
-                      <td className="py-2.5 text-left font-medium">Secondary</td>
-                      <td className="py-2.5"><Button variant="secondary">Button</Button></td>
-                      <td className="py-2.5"><Button variant="secondary" className="bg-[#E5E7EB]">Button</Button></td>
-                      <td className="py-2.5"><Button variant="secondary" outline>Button</Button></td>
-                      <td className="py-2.5"><Button variant="secondary" disabled>Button</Button></td>
-                    </tr>
-                    <tr>
-                      <td className="py-2.5 text-left font-medium">Text</td>
-                      <td className="py-2.5"><Button variant="text">Button</Button></td>
-                      <td className="py-2.5"><Button variant="text" className="text-[#1D4ED8]">Button</Button></td>
-                      <td className="py-2.5 text-[#6B7280]">—</td>
-                      <td className="py-2.5 text-[#6B7280]">—</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Chips / Category */}
-            <div>
-              <span className="text-[12px] font-semibold text-[#0D0D0F] block mb-3">CHIP / CATEGORY</span>
-              <div className="flex flex-wrap gap-2">
-                <Chip label="World Cup" />
-                <Chip label="IPL" />
-                <Chip label="Business & Markets" />
-                <Chip label="More" />
-              </div>
-            </div>
-
-            {/* Bias Meter */}
-            <div>
-              <span className="text-[12px] font-semibold text-[#0D0D0F] block mb-3">BIAS METER</span>
-              <BiasMeter leftPercentage={25} centerPercentage={50} rightPercentage={25} showTicks={true} />
-            </div>
-          </section>
-
-          {/* ICONS CARD (Cols 1-4) */}
-          <section className="md:col-span-4 bg-white p-6 rounded-[12px] border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-            <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-4">
-              ICONS
-            </h2>
-            <div className="grid grid-cols-5 gap-4 text-center py-2 text-[#0D0D0F]">
-              <div className="flex justify-center"><Menu className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><Search className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><Bookmark className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><Clock className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><Info className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><Share2 className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><ExternalLink className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><Calendar className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><TrendingUp className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><Tag className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><User className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><Bell className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><SlidersHorizontal className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><CheckCircle2 className="w-5 h-5 stroke-[2]" /></div>
-              <div className="flex justify-center"><MoreHorizontal className="w-5 h-5 stroke-[2]" /></div>
-            </div>
-            <p className="text-[12px] text-[#6B7280] mt-6">
-              Line style • 2px stroke • Rounded caps
-            </p>
-          </section>
-
-          {/* CARD EXAMPLE (Cols 5-12) */}
-          <section className="md:col-span-8 bg-white p-6 rounded-[12px] border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-            <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-4">
-              CARD EXAMPLE
-            </h2>
-            <ArticleCard
-              category="Politics"
-              location="United States"
-              title="Trump Sends Iran Revised Peace Proposal With Tougher Terms: Report"
-              summary="The proposal includes stricter limits on uranium enrichment and enhanced verification measures."
-              leftPercentage={25}
-              centerPercentage={50}
-              rightPercentage={49}
-              timeAgo="2h ago"
-              readTime="12 min read"
-            />
-          </section>
-
-          {/* SPACING SYSTEM CARD (Cols 1-4) */}
-          <section className="md:col-span-4 bg-white p-6 rounded-[12px] border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-            <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-1">
-              SPACING SYSTEM
-            </h2>
-            <p className="text-[11px] text-[#6B7280] mb-6">(4px BASE UNIT)</p>
-
-            <div className="flex items-end justify-between gap-1 h-32 pb-2">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-4 bg-[#C7D2FE] rounded-xs" style={{ height: "4px" }}></div>
-                <span className="text-[10px] text-[#6B7280]">4px</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-5 bg-[#C7D2FE] rounded-xs" style={{ height: "8px" }}></div>
-                <span className="text-[10px] text-[#6B7280]">8px</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-6 bg-[#C7D2FE] rounded-xs" style={{ height: "16px" }}></div>
-                <span className="text-[10px] text-[#6B7280]">16px</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-7 bg-[#C7D2FE] rounded-xs" style={{ height: "24px" }}></div>
-                <span className="text-[10px] text-[#6B7280]">24px</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-8 bg-[#C7D2FE] rounded-xs" style={{ height: "32px" }}></div>
-                <span className="text-[10px] text-[#6B7280]">32px</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-9 bg-[#C7D2FE] rounded-xs" style={{ height: "40px" }}></div>
-                <span className="text-[10px] text-[#6B7280]">40px</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-10 bg-[#C7D2FE] rounded-xs" style={{ height: "64px" }}></div>
-                <span className="text-[10px] text-[#6B7280]">64px</span>
-              </div>
-            </div>
-            <p className="text-[12px] text-[#6B7280] mt-4">
-              Consistent spacing scale based on 4px base unit
-            </p>
-          </section>
-
-          {/* GRID SYSTEM CARD (Cols 5-8) */}
-          <section className="md:col-span-4 bg-white p-6 rounded-[12px] border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-            <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-4">
-              GRID SYSTEM
-            </h2>
-            <div className="bg-[#EEF2FF] p-3 rounded-[8px] flex gap-1 h-36 relative overflow-hidden">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="flex-1 bg-[#C7D2FE]/60 rounded-xs h-full"></div>
-              ))}
-              <div className="absolute right-3 top-3 text-right text-[10px] text-[#6B7280] space-y-1 bg-white/80 p-1.5 rounded backdrop-blur-xs">
-                <p><span className="font-semibold">Container</span> 1280px</p>
-                <p><span className="font-semibold">Columns</span> 12</p>
-                <p><span className="font-semibold">Gutter</span> 24px</p>
-                <p><span className="font-semibold">Margin</span> 24px</p>
-              </div>
-            </div>
-          </section>
-
-          {/* SHADOWS & BORDER RADIUS (Cols 9-12) */}
-          <section className="md:col-span-4 bg-white p-6 rounded-[12px] border border-[#E5E7EB] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] space-y-6">
-            <div>
-              <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-3">
-                SHADOWS
-              </h2>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="p-3 bg-white rounded-[8px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] border border-[#E5E7EB]">
-                  <p className="text-[10px] font-semibold">SMALL</p>
-                  <p className="text-[9px] text-[#6B7280]">0 1px 2px</p>
-                </div>
-                <div className="p-3 bg-white rounded-[8px] shadow-[0px_4px_12px_rgba(0,0,0,0.08)] border border-[#E5E7EB]">
-                  <p className="text-[10px] font-semibold">MEDIUM</p>
-                  <p className="text-[9px] text-[#6B7280]">0 4px 12px</p>
-                </div>
-                <div className="p-3 bg-white rounded-[8px] shadow-[0px_12px_24px_rgba(0,0,0,0.12)] border border-[#E5E7EB]">
-                  <p className="text-[10px] font-semibold">LARGE</p>
-                  <p className="text-[9px] text-[#6B7280]">0 12px 24px</p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-3">
-                BORDER RADIUS
-              </h2>
-              <div className="grid grid-cols-4 gap-2 text-center text-[10px]">
-                <div>
-                  <div className="w-full h-10 bg-[#F6F6F6] border border-[#D1D5DB] rounded-[4px] mb-1"></div>
-                  <p className="font-semibold">SMALL</p>
-                  <p className="text-[#6B7280]">4px</p>
-                </div>
-                <div>
-                  <div className="w-full h-10 bg-[#F6F6F6] border border-[#D1D5DB] rounded-[8px] mb-1"></div>
-                  <p className="font-semibold">MEDIUM</p>
-                  <p className="text-[#6B7280]">8px</p>
-                </div>
-                <div>
-                  <div className="w-full h-10 bg-[#F6F6F6] border border-[#D1D5DB] rounded-[12px] mb-1"></div>
-                  <p className="font-semibold">LARGE</p>
-                  <p className="text-[#6B7280]">12px</p>
-                </div>
-                <div>
-                  <div className="w-full h-10 bg-[#F6F6F6] border border-[#D1D5DB] rounded-full mb-1"></div>
-                  <p className="font-semibold">FULL</p>
-                  <p className="text-[#6B7280]">9999px</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-
-      {/* Footer Spec Banner */}
-      <footer className="mt-12 bg-[#0D0D0F] text-white py-6 px-8">
-        <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row items-center justify-between text-[13px] gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-[20px] font-bold tracking-tight">biasly</span>
-            <span className="text-[14px] text-zinc-400 font-semibold">News</span>
-            <span className="text-zinc-500 hidden md:inline">|</span>
-            <span className="text-zinc-400 text-[12px]">Balanced news coverage, powered by AI.</span>
           </div>
 
-          <div className="flex items-center gap-6 text-[12px] text-zinc-400">
-            <span>Design System v1.0</span>
-            <span>June 1, 2026</span>
-          </div>
-
-          <div className="text-[13px] font-medium text-white">
-            Stay consistent. Stay unbiased.
+          {/* Bottom bar copyright */}
+          <div className="pt-6 text-[12px] text-zinc-400 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© 2026 Biasly News. All rights reserved.</p>
           </div>
         </div>
       </footer>
