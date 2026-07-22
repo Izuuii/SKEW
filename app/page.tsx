@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { ArticleCard } from "@/components/ui/article-card";
+import { Show, UserButton, SignInButton } from "@clerk/nextjs";
 
 // Mock data for the 12 Top News articles matching Skew Home spec
 const articlesData = [
@@ -292,19 +293,28 @@ export default function Home() {
 
           {/* Right Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <Button
-              variant="primary"
-              className="bg-[#0D0D0F] text-white hover:bg-[#0D0D0F]/90 text-[12px] sm:text-[13px] font-medium px-3 sm:px-4 py-1.5 rounded-[6px] h-8 sm:h-9"
-            >
-              Subscribe
-            </Button>
-            <Button
-              variant="secondary"
-              outline
-              className="border border-[#E5E7EB] bg-white text-[#0D0D0F] hover:bg-[#F6F6F6] text-[12px] sm:text-[13px] font-medium px-3 sm:px-4 py-1.5 rounded-[6px] h-8 sm:h-9"
-            >
-              Login
-            </Button>
+            <Show when="signed-out">
+              <Link href="/sign-up">
+                <Button
+                  variant="primary"
+                  className="bg-[#0D0D0F] text-white hover:bg-[#0D0D0F]/90 text-[12px] sm:text-[13px] font-medium px-3 sm:px-4 py-1.5 rounded-[6px] h-8 sm:h-9 cursor-pointer"
+                >
+                  Subscribe
+                </Button>
+              </Link>
+              <Link href="/sign-in">
+                <Button
+                  variant="secondary"
+                  outline
+                  className="border border-[#E5E7EB] bg-white text-[#0D0D0F] hover:bg-[#F6F6F6] text-[12px] sm:text-[13px] font-medium px-3 sm:px-4 py-1.5 rounded-[6px] h-8 sm:h-9 cursor-pointer"
+                >
+                  Login
+                </Button>
+              </Link>
+            </Show>
+            <Show when="signed-in">
+              <UserButton />
+            </Show>
           </div>
         </div>
 
@@ -385,23 +395,19 @@ export default function Home() {
         {/* 3-Column Responsive Grid matching Skew Home */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {articlesData.map((article) => (
-            <ArticleCard
-              key={article.id}
-              imageUrl={article.imageUrl}
-              category={article.category}
-              location={article.location}
-              title={article.title}
-              leftPercentage={article.leftPercentage}
-              centerPercentage={article.centerPercentage}
-              rightPercentage={article.rightPercentage}
-              sourcesCount={article.sourcesCount}
-              variant="grid"
-              onCardClick={() => {
-                if (typeof window !== "undefined") {
-                  window.location.href = `/article/${article.id}`;
-                }
-              }}
-            />
+            <Link key={article.id} href={`/article/${article.id}`} className="block">
+              <ArticleCard
+                imageUrl={article.imageUrl}
+                category={article.category}
+                location={article.location}
+                title={article.title}
+                leftPercentage={article.leftPercentage}
+                centerPercentage={article.centerPercentage}
+                rightPercentage={article.rightPercentage}
+                sourcesCount={article.sourcesCount}
+                variant="grid"
+              />
+            </Link>
           ))}
         </div>
       </main>

@@ -9,11 +9,10 @@ import {
   Share2,
   MoreHorizontal,
   Info,
-  ChevronRight,
-  Clock,
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Show, UserButton, SignInButton } from "@clerk/nextjs";
 
 interface ArticleDetailPageProps {
   params: Promise<{ id: string }>;
@@ -21,8 +20,7 @@ interface ArticleDetailPageProps {
 
 export default function ArticleDetailPage({ params }: ArticleDetailPageProps) {
   // Unwrap params using React.use
-  const unwrappedParams = React.use(params);
-  const articleId = unwrappedParams.id || "1";
+  React.use(params);
 
   const [themeMode, setThemeMode] = useState<"Light" | "Dark" | "Auto">("Light");
   const [isSaved, setIsSaved] = useState<boolean>(false);
@@ -224,19 +222,28 @@ export default function ArticleDetailPage({ params }: ArticleDetailPageProps) {
 
           {/* Right action buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <Button
-              variant="primary"
-              className="bg-[#0D0D0F] hover:bg-[#222] text-white rounded-md text-[13px] font-medium px-4 h-9"
-            >
-              Subscribe
-            </Button>
-            <Button
-              variant="secondary"
-              outline
-              className="bg-transparent border-[#E5E7EB] hover:bg-[#E5E7EB]/50 text-[#0D0D0F] rounded-md text-[13px] font-medium px-4 h-9"
-            >
-              Login
-            </Button>
+            <Show when="signed-out">
+              <Link href="/sign-up">
+                <Button
+                  variant="primary"
+                  className="bg-[#0D0D0F] hover:bg-[#222] text-white rounded-md text-[13px] font-medium px-4 h-9 cursor-pointer"
+                >
+                  Subscribe
+                </Button>
+              </Link>
+              <Link href="/sign-in">
+                <Button
+                  variant="secondary"
+                  outline
+                  className="bg-transparent border-[#E5E7EB] hover:bg-[#E5E7EB]/50 text-[#0D0D0F] rounded-md text-[13px] font-medium px-4 h-9 cursor-pointer"
+                >
+                  Login
+                </Button>
+              </Link>
+            </Show>
+            <Show when="signed-in">
+              <UserButton />
+            </Show>
           </div>
         </div>
 
