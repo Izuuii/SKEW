@@ -396,6 +396,11 @@ export default function Home() {
               rightPercentage={article.rightPercentage}
               sourcesCount={article.sourcesCount}
               variant="grid"
+              onCardClick={() => {
+                if (typeof window !== "undefined") {
+                  window.location.href = `/article/${article.id}`;
+                }
+              }}
             />
           ))}
         </div>
