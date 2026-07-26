@@ -32,7 +32,19 @@ export async function getActiveSources(): Promise<Source[]> {
     throw new Error(`Failed to fetch active sources: ${error.message}`);
   }
 
-  return (data || []) as Source[];
+  const rawSources = (data || []) as Source[];
+  const seen = new Set<string>();
+  const uniqueSources: Source[] = [];
+
+  for (const s of rawSources) {
+    const key = (s.listing_url || s.name).toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueSources.push(s);
+    }
+  }
+
+  return uniqueSources;
 }
 
 export async function getAllSources(): Promise<Source[]> {
@@ -120,10 +132,19 @@ export async function getExistingArticleUrls(urls: string[]): Promise<Set<string
 export async function insertArticles(articles: ArticleInsert[]): Promise<Article[]> {
   if (!articles.length) return [];
 
+  // Deduplicate array in memory by original_url before inserting
+  const uniqueMap = new Map<string, ArticleInsert>();
+  for (const art of articles) {
+    if (!uniqueMap.has(art.original_url)) {
+      uniqueMap.set(art.original_url, art);
+    }
+  }
+  const uniqueArticles = Array.from(uniqueMap.values());
+
   const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from('articles')
-    .insert(articles)
+    .upsert(uniqueArticles, { onConflict: 'original_url', ignoreDuplicates: true })
     .select();
 
   if (error) {
