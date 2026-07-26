@@ -1,5 +1,9 @@
 # Clerk Authentication Architecture & Implementation Details
 
+> **Related**: [[Home]] → [[clerk-authentication-architecture]]
+> **See also**: [[clerk-authentication-guide]] for full file-by-file breakdown
+> **Guards**: `/article/[id]` routes — users need sign-in to access full AI analysis detail pages
+
 This document explains the technical architecture, middleware behavior, route protection flow, and UI wiring for the **Clerk Authentication** integration in **biasly**.
 
 ---

@@ -1,5 +1,9 @@
 # Clerk Authentication: Feature Breakdown & Technical Explanation
 
+> **Related**: [[Home]] → [[clerk-authentication-guide]]
+> **See also**: [[clerk-authentication-architecture]] for the architecture diagram
+> **Protects**: [[ai-analysis-guide]] and [[scraping-pipeline-guide]] API routes via `x-biasly-admin-secret`
+
 This document provides a detailed technical breakdown of every generated and modified file for the **Clerk Authentication** feature in **biasly News**. It covers the edge middleware, full-page sign-in and sign-up catch-all routes, server-side protected route behavior, and UI wiring for authentication components.
 
 ---
@@ -29,17 +33,17 @@ This document provides a detailed technical breakdown of every generated and mod
 
 ## Summary of Generated & Modified Files
 
-| File | Status | Core Responsibility |
-| :--- | :--- | :--- |
-| [`package.json`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/package.json) | Modified | Dependency configuration for `@clerk/nextjs` (v7). |
-| [`.env.local`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/.env.local) | Modified | Clerk API keys and fallback redirect path routing variables. |
-| [`app/layout.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/layout.tsx) | Modified | App root provider wrapper `<ClerkProvider>`. |
-| [`middleware.ts`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/middleware.ts) | Generated | Edge middleware interceptor & route protection matcher. |
-| [`app/sign-in/[[...sign-in]]/page.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/sign-in/%5B%5B...sign-in%5D%5D/page.tsx) | Generated | Catch-all full-page sign-in route with biasly layout. |
-| [`app/sign-up/[[...sign-up]]/page.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/sign-up/%5B%5B...sign-up%5D%5D/page.tsx) | Generated | Catch-all full-page sign-up route with biasly layout. |
-| [`app/page.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/page.tsx) | Modified | Home feed article route links & dynamic auth header controls (`<Show>`). |
-| [`app/article/[id]/page.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/article/%5Bid%5D/page.tsx) | Modified | Detail page header auth controls & protected destination content. |
-| [`prompts/clerk-authentication.md`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/prompts/clerk-authentication.md) | Generated | Implementation prompt artifact complying with `AGENTS.md` guidelines. |
+| File                                                                                                                                  | Status    | Core Responsibility                                                      |
+| :------------------------------------------------------------------------------------------------------------------------------------ | :-------- | :----------------------------------------------------------------------- |
+| [`package.json`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/package.json)                                                       | Modified  | Dependency configuration for `@clerk/nextjs` (v7).                       |
+| [`.env.local`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/.env.local)                                                           | Modified  | Clerk API keys and fallback redirect path routing variables.             |
+| [`app/layout.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/layout.tsx)                                                   | Modified  | App root provider wrapper `<ClerkProvider>`.                             |
+| [`middleware.ts`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/middleware.ts)                                                     | Generated | Edge middleware interceptor & route protection matcher.                  |
+| [`app/sign-in/[[...sign-in]]/page.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/sign-in/%5B%5B...sign-in%5D%5D/page.tsx) | Generated | Catch-all full-page sign-in route with biasly layout.                    |
+| [`app/sign-up/[[...sign-up]]/page.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/sign-up/%5B%5B...sign-up%5D%5D/page.tsx) | Generated | Catch-all full-page sign-up route with biasly layout.                    |
+| [`app/page.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/page.tsx)                                                       | Modified  | Home feed article route links & dynamic auth header controls (`<Show>`). |
+| [`app/article/[id]/page.tsx`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/app/article/%5Bid%5D/page.tsx)                         | Modified  | Detail page header auth controls & protected destination content.        |
+| [`prompts/clerk-authentication.md`](file:///c:/Users/Dan%20Denver/Documents/jsm-skew/prompts/clerk-authentication.md)                 | Generated | Implementation prompt artifact complying with `AGENTS.md` guidelines.    |
 
 ---
 

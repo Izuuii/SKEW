@@ -245,6 +245,10 @@ export function parseArticleDetail(
   if (imageUrl) {
     const normalizedImage = normalizeUrl(imageUrl, articleUrl);
     if (normalizedImage) imageUrl = normalizedImage;
+    // Guardian images have HMAC signatures in query params that cause 401s if expired
+    if (imageUrl && imageUrl.includes('i.guim.co.uk')) {
+      imageUrl = imageUrl.split('?')[0];
+    }
   }
 
   // Fallback to first large article image if og:image is missing

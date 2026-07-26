@@ -1,15 +1,10 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-
-/**
- * Creates a standard server client using anonymous/publishable key.
- */
 export const createServerClient = () => {
-  return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey, {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  return createSupabaseClient<Database>(url, key, {
     auth: {
       persistSession: false,
     },
@@ -21,8 +16,9 @@ export const createServerClient = () => {
  * WARNING: Never expose this client or SUPABASE_SERVICE_ROLE_KEY to browser bundles.
  */
 export const createServiceRoleClient = () => {
-  const key = supabaseServiceRoleKey || supabaseAnonKey;
-  return createSupabaseClient<Database>(supabaseUrl, key, {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  return createSupabaseClient<Database>(url, key, {
     auth: {
       persistSession: false,
     },

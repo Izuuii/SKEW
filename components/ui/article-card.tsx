@@ -47,6 +47,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           <img
             src={imageUrl}
             alt={title}
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop";
+            }}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
           />
           <button
@@ -133,6 +138,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           <img
             src={imageUrl}
             alt={title}
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop";
+            }}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
           />
           <button

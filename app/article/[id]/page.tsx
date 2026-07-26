@@ -273,6 +273,11 @@ export default function ArticleDetailPage({ params }: ArticleDetailPageProps) {
                   <img
                     src={article.image_url}
                     alt={article.title}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop";
+                    }}
                     className="w-full h-auto max-h-[460px] object-cover object-center"
                   />
                 </div>
