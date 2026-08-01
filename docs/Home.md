@@ -35,6 +35,7 @@ Welcome to the **Biasly** developer knowledge base. Open this `docs/` folder in 
 | [[clerk-authentication-architecture]] | Architecture diagram, file-by-file middleware & route breakdown |
 | [[scraping-pipeline-guide]] | 9-step Oxylabs scrape-to-insert flow, URL filtering, content gate, deduplication |
 | [[ai-analysis-guide]] | AI model selection, Zod schema, prompt design, normalization, retry logic, cron integration |
+| [[pgvector-embeddings-guide]] | OpenAI 1536-dim vector embeddings, pgvector IVFFlat index, `match_related_articles` RPC, related articles UI |
 
 ---
 
@@ -43,12 +44,15 @@ Welcome to the **Biasly** developer knowledge base. Open this `docs/` folder in 
 1. **Scraping** → [[scraping-pipeline-guide]]
    Oxylabs fetches news homepages, extracts story links, filters non-article URLs, scrapes detail pages, validates content, and inserts raw articles into `articles` table with `analyzed_at = null`.
 
-2. **AI Analysis** → [[ai-analysis-guide]]
-   Reads all `articles` rows with no matching `article_analyses` row (LEFT JOIN), sends each to LLM via Vercel AI SDK (OpenAI / OpenRouter), normalizes the structured output, and writes results to `article_analyses`. Sets `analyzed_at` on the article row.
+2. **AI Analysis & Vector Embeddings** → [[ai-analysis-guide]] & [[pgvector-embeddings-guide]]
+   Reads all `articles` rows missing analysis or embedding (LEFT JOIN), sends each to LLM via Vercel AI SDK for structured text analysis AND generates 1536-dimensional vector embeddings (`text-embedding-3-small`). Writes results to `article_analyses`. Sets `analyzed_at` on the article row.
 
-3. **Home Feed** reads only articles where `analyzed_at IS NOT NULL` — articles without analysis are invisible to users.
+3. **Related Articles Search** → [[pgvector-embeddings-guide]]
+   When viewing `/article/[id]`, the system calls `match_related_articles` RPC over Supabase to compute vector cosine distance (`<=>`), returning up to 5 semantically similar stories on the news details page.
 
-4. **Clerk Auth** → [[clerk-authentication-guide]]
+4. **Home Feed** reads only articles where `analyzed_at IS NOT NULL` — articles without analysis are invisible to users.
+
+5. **Clerk Auth** → [[clerk-authentication-guide]]
    Middleware guards `/article/[id]`. Public browsing is allowed on `/`. Full analysis details require sign-in.
 
 ---
@@ -75,6 +79,7 @@ Welcome to the **Biasly** developer knowledge base. Open this `docs/` folder in 
 docs/
 ├── Home.md                         ← You are here
 ├── ai-analysis-guide.md            ← AI pipeline deep-dive
+├── pgvector-embeddings-guide.md    ← pgvector & related articles deep-dive
 ├── scraping-pipeline-guide.md      ← Oxylabs scraping deep-dive
 ├── clerk-authentication-guide.md   ← Auth feature breakdown
 ├── clerk-authentication-architecture.md ← Auth architecture diagram

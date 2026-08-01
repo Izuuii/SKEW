@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Menu,
   Globe,
   Bookmark,
   Share2,
-  MoreHorizontal,
   Info,
   Check,
   Loader2,
@@ -15,7 +14,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Show, UserButton } from "@clerk/nextjs";
+import { Show, UserButton, useUser } from "@clerk/nextjs";
+import posthog from "posthog-js";
 import type { ArticleWithAnalysis } from "@/lib/supabase/types";
 
 interface ArticleDetailPageProps {
@@ -23,17 +23,52 @@ interface ArticleDetailPageProps {
 }
 
 export default function ArticleDetailPage({ params }: ArticleDetailPageProps) {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const identifiedUserId = useRef<string | null>(null);
   const unwrappedParams = React.use(params);
   const articleId = unwrappedParams.id;
 
   const [article, setArticle] = useState<ArticleWithAnalysis | null>(null);
+  const [relatedArticles, setRelatedArticles] = useState<ArticleWithAnalysis[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingRelated, setIsLoadingRelated] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const [themeMode, setThemeMode] = useState<"Light" | "Dark" | "Auto">("Light");
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    if (!isSignedIn || !user) {
+      if (identifiedUserId.current) {
+        posthog.reset();
+        identifiedUserId.current = null;
+      }
+      return;
+    }
+
+    if (identifiedUserId.current === user.id) {
+      return;
+    }
+
+    if (identifiedUserId.current) {
+      posthog.reset();
+    }
+
+    const email = user.primaryEmailAddress?.emailAddress;
+    const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
+
+    posthog.identify(user.id, {
+      ...(email ? { email } : {}),
+      ...(name ? { name } : {}),
+    });
+    identifiedUserId.current = user.id;
+  }, [isLoaded, isSignedIn, user]);
 
   useEffect(() => {
     async function loadArticle() {
@@ -44,6 +79,20 @@ export default function ArticleDetailPage({ params }: ArticleDetailPageProps) {
         const json = await res.json();
         if (json.success && json.data) {
           setArticle(json.data);
+
+          // Fetch related articles if article is found
+          setIsLoadingRelated(true);
+          try {
+            const relRes = await fetch(`/api/articles/${articleId}/related`);
+            const relJson = await relRes.json();
+            if (relJson.success && Array.isArray(relJson.data)) {
+              setRelatedArticles(relJson.data);
+            }
+          } catch (relErr) {
+            console.error("Error loading related articles:", relErr);
+          } finally {
+            setIsLoadingRelated(false);
+          }
         } else {
           setError(json.error || "Article not found");
         }
@@ -60,10 +109,23 @@ export default function ArticleDetailPage({ params }: ArticleDetailPageProps) {
     }
   }, [articleId]);
 
+  const handleSave = () => {
+    const saved = !isSaved;
+    setIsSaved(saved);
+    posthog.capture("article_saved", {
+      article_id: articleId,
+      saved,
+    });
+  };
+
   const handleShare = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href);
       setIsCopied(true);
+      posthog.capture("article_shared", {
+        article_id: articleId,
+        share_method: "copy_link",
+      });
       setTimeout(() => setIsCopied(false), 2000);
     }
   };
@@ -248,7 +310,7 @@ export default function ArticleDetailPage({ params }: ArticleDetailPageProps) {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setIsSaved(!isSaved)}
+                    onClick={handleSave}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-[12px] font-medium transition-colors cursor-pointer ${
                       isSaved ? "bg-[#0D0D0F] text-white border-[#0D0D0F]" : "bg-white text-[#0D0D0F] border-[#E5E7EB] hover:bg-[#F6F6F6]"
                     }`}
@@ -380,6 +442,104 @@ export default function ArticleDetailPage({ params }: ArticleDetailPageProps) {
                 )}
               </div>
             </div>
+
+            {/* RELATED ARTICLES SECTION */}
+            {relatedArticles.length > 0 && (
+              <div className="mt-12 pt-8 border-t border-[#E5E7EB] space-y-6 col-span-1 lg:col-span-12">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h2 className="text-[20px] sm:text-[24px] font-bold text-[#0D0D0F] tracking-tight">
+                      Related Coverage & Similar Stories
+                    </h2>
+                    <p className="text-[13px] text-[#6B7280]">
+                      Articles matched by AI pgvector semantic cosine similarity
+                    </p>
+                  </div>
+                  <span className="text-[12px] font-medium text-[#6B7280] bg-white border border-[#E5E7EB] px-3 py-1 rounded-full">
+                    {relatedArticles.length} Related
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {relatedArticles.map((relArt) => {
+                    const rLeft = relArt.analysis?.left_percentage ?? 33;
+                    const rCenter = relArt.analysis?.center_percentage ?? 34;
+                    const rRight = relArt.analysis?.right_percentage ?? 33;
+
+                    return (
+                      <Link
+                        key={relArt.id}
+                        href={`/article/${relArt.id}`}
+                        onClick={() => {
+                          posthog.capture("related_article_opened", {
+                            article_id: relArt.id,
+                            source_article_id: articleId,
+                            source_id: relArt.source?.id ?? "unknown",
+                            bias_label: relArt.analysis?.bias_label ?? "unavailable",
+                          });
+                        }}
+                        className="group bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden hover:border-[#0D0D0F]/30 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+                      >
+                        <div>
+                          {relArt.image_url ? (
+                            <div className="w-full h-44 bg-[#E5E7EB] overflow-hidden">
+                              <img
+                                src={relArt.image_url}
+                                alt={relArt.title}
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src =
+                                    "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop";
+                                }}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-full h-32 bg-[#F3F4F6] flex items-center justify-center text-[#9CA3AF] text-[12px]">
+                              No Image
+                            </div>
+                          )}
+
+                          <div className="p-4 space-y-2">
+                            <div className="flex items-center justify-between text-[11px] text-[#6B7280]">
+                              <span className="font-semibold text-[#0D0D0F]">
+                                {relArt.source?.name || "News Source"}
+                              </span>
+                              <span>
+                                {new Date(relArt.published_at).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </span>
+                            </div>
+
+                            <h3 className="font-bold text-[15px] text-[#0D0D0F] leading-snug line-clamp-2 group-hover:text-[#1D4ED8] transition-colors">
+                              {relArt.title}
+                            </h3>
+                          </div>
+                        </div>
+
+                        {/* Bias distribution mini bar */}
+                        <div className="px-4 pb-4 space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="font-medium text-[#6B7280]">AI Framing:</span>
+                            <span className="font-bold capitalize text-[#0D0D0F]">
+                              {relArt.analysis?.bias_label || "Center"}
+                            </span>
+                          </div>
+                          <div className="h-2 w-full rounded-full overflow-hidden flex text-[8px]">
+                            <div style={{ width: `${rLeft}%` }} className="bg-[#B42318]" />
+                            <div style={{ width: `${rCenter}%` }} className="bg-[#D1D5DB]" />
+                            <div style={{ width: `${rRight}%` }} className="bg-[#1D4ED8]" />
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

@@ -66,6 +66,7 @@ export type ArticleAnalysis = {
   loaded_terms: string[] | null;
   disclaimer: string | null;
   model: string;
+  embedding?: number[] | null;
   created_at: string;
 };
 
@@ -85,6 +86,7 @@ export type ArticleAnalysisInsert = {
   loaded_terms?: string[] | null;
   disclaimer?: string | null;
   model: string;
+  embedding?: number[] | null;
   created_at?: string;
 };
 
@@ -197,7 +199,19 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      match_related_articles: {
+        Args: {
+          target_article_id: string;
+          target_embedding: string | number[];
+          match_count?: number;
+        };
+        Returns: {
+          article_id: string;
+          similarity: number;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

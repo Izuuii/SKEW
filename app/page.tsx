@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Menu,
@@ -14,7 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { ArticleCard } from "@/components/ui/article-card";
-import { Show, UserButton, SignInButton } from "@clerk/nextjs";
+import { Show, UserButton, useUser } from "@clerk/nextjs";
+import posthog from "posthog-js";
 import type { ArticleWithAnalysis, Source, BiasLabel } from "@/lib/supabase/types";
 
 const biasFilterChips: Array<{ label: string; value: BiasLabel | null }> = [
@@ -26,6 +27,8 @@ const biasFilterChips: Array<{ label: string; value: BiasLabel | null }> = [
 ];
 
 export default function Home() {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const identifiedUserId = useRef<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("Home");
   const [themeMode, setThemeMode] = useState<"Light" | "Dark" | "Auto">("Light");
   const [activeBiasFilter, setActiveBiasFilter] = useState<BiasLabel | null>(null);
@@ -36,6 +39,37 @@ export default function Home() {
   const [sources, setSources] = useState<Source[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    if (!isSignedIn || !user) {
+      if (identifiedUserId.current) {
+        posthog.reset();
+        identifiedUserId.current = null;
+      }
+      return;
+    }
+
+    if (identifiedUserId.current === user.id) {
+      return;
+    }
+
+    if (identifiedUserId.current) {
+      posthog.reset();
+    }
+
+    const email = user.primaryEmailAddress?.emailAddress;
+    const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
+
+    posthog.identify(user.id, {
+      ...(email ? { email } : {}),
+      ...(name ? { name } : {}),
+    });
+    identifiedUserId.current = user.id;
+  }, [isLoaded, isSignedIn, user]);
 
   useEffect(() => {
     async function loadData() {
@@ -158,7 +192,13 @@ export default function Home() {
               <button
                 key={nav.label}
                 type="button"
-                onClick={() => setActiveTab(nav.label)}
+                onClick={() => {
+                  setActiveTab(nav.label);
+                  posthog.capture("news_navigation_selected", {
+                    navigation_tab: nav.label,
+                    navigation_surface: "desktop",
+                  });
+                }}
                 className={`relative py-4 transition-colors cursor-pointer ${
                   activeTab === nav.label
                     ? "font-semibold text-[#0D0D0F]"
@@ -218,6 +258,10 @@ export default function Home() {
                 onClick={() => {
                   setActiveTab(nav.label);
                   setIsMobileMenuOpen(false);
+                  posthog.capture("news_navigation_selected", {
+                    navigation_tab: nav.label,
+                    navigation_surface: "mobile",
+                  });
                 }}
                 className={`w-full text-left px-3 py-2 text-[14px] rounded-md transition-colors ${
                   activeTab === nav.label
@@ -247,7 +291,12 @@ export default function Home() {
                 label={chip.label}
                 showPlus={false}
                 active={activeBiasFilter === chip.value}
-                onClick={() => setActiveBiasFilter(chip.value)}
+                onClick={() => {
+                  setActiveBiasFilter(chip.value);
+                  posthog.capture("news_bias_filter_selected", {
+                    bias_filter: chip.value ?? "all",
+                  });
+                }}
                 className={`shrink-0 text-[13px] border-[#E5E7EB] py-1 px-3 cursor-pointer ${
                   activeBiasFilter === chip.value
                     ? "bg-[#0D0D0F] text-white"
@@ -262,7 +311,13 @@ export default function Home() {
               <span className="text-[12px] text-[#6B7280]">Source:</span>
               <select
                 value={selectedSourceId || ""}
-                onChange={(e) => setSelectedSourceId(e.target.value || null)}
+                onChange={(e) => {
+                  const sourceId = e.target.value || null;
+                  setSelectedSourceId(sourceId);
+                  posthog.capture("news_source_filter_selected", {
+                    source_id: sourceId ?? "all",
+                  });
+                }}
                 className="text-[12px] bg-white border border-[#E5E7EB] rounded px-2 py-1 text-[#0D0D0F]"
               >
                 <option value="">All Sources</option>
@@ -298,7 +353,10 @@ export default function Home() {
             <p className="font-semibold mb-2">Database Connection Notice</p>
             <p className="text-[13px] text-zinc-600 mb-4">{error}</p>
             <Button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                posthog.capture("articles_reload_requested");
+                window.location.reload();
+              }}
               className="bg-[#0D0D0F] text-white text-[13px] px-4 py-2"
             >
               <RefreshCw className="w-4 h-4 mr-2" /> Retry Connection
@@ -320,7 +378,18 @@ export default function Home() {
               const rightPct = article.analysis?.right_percentage ?? 33;
 
               return (
-                <Link key={article.id} href={`/article/${article.id}`} className="block">
+                <Link
+                  key={article.id}
+                  href={`/article/${article.id}`}
+                  onClick={() => {
+                    posthog.capture("article_opened", {
+                      article_id: article.id,
+                      source_id: article.source?.id ?? "unknown",
+                      bias_label: article.analysis?.bias_label ?? "unavailable",
+                    });
+                  }}
+                  className="block"
+                >
                   <ArticleCard
                     imageUrl={article.image_url}
                     category={sourceName}

@@ -1,4 +1,4 @@
-import { generateObject, generateText } from 'ai';
+import { embed, generateObject, generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import {
@@ -21,6 +21,36 @@ function getAIModel() {
   });
   const modelName = process.env.OPENAI_MODEL || 'openrouter/free';
   return { model: openai.chat(modelName), modelName };
+}
+
+/**
+ * Generates a 1536-dimensional vector embedding for an article using OpenAI text-embedding-3-small.
+ */
+export async function generateArticleEmbedding(article: Article): Promise<number[] | null> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.warn('[AI Embedding] OPENAI_API_KEY is missing, skipping embedding generation.');
+    return null;
+  }
+
+  try {
+    const openai = createOpenAI({
+      apiKey,
+      ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {}),
+    });
+
+    const textToEmbed = `${article.title}\n\n${article.raw_text}`.slice(0, 8000);
+
+    const { embedding } = await embed({
+      model: openai.embedding('text-embedding-3-small'),
+      value: textToEmbed,
+    });
+
+    return embedding;
+  } catch (err) {
+    console.error(`[AI Embedding] Failed to generate embedding for article "${article.id}":`, err);
+    return null;
+  }
 }
 
 export const ArticleAnalysisSchema = z.object({
@@ -296,14 +326,23 @@ export async function runAnalysisPipeline(
     );
 
     try {
-      const { analysisInsert, modelUsed } = await analyzeArticleText(article);
+      // 1. Generate text analysis and embedding in parallel
+      const [analysisResult, embedding] = await Promise.all([
+        analyzeArticleText(article),
+        generateArticleEmbedding(article),
+      ]);
 
-      // Save analysis and set analyzed_at
+      const { analysisInsert, modelUsed } = analysisResult;
+      if (embedding) {
+        analysisInsert.embedding = embedding;
+      }
+
+      // 2. Save analysis record & set articles.analyzed_at
       const savedAnalysis = await saveArticleAnalysis(analysisInsert);
 
       analyzedCount++;
       console.log(
-        `[AI Analysis Pipeline] [${i + 1}/${totalPending}] Successfully analyzed "${article.title}" -> Bias: ${savedAnalysis.bias_label} (${savedAnalysis.bias_score.toFixed(2)}) using ${modelUsed}`
+        `[AI Analysis Pipeline] [${i + 1}/${totalPending}] Successfully analyzed & embedded "${article.title}" -> Bias: ${savedAnalysis.bias_label} (${savedAnalysis.bias_score.toFixed(2)}) using ${modelUsed}`
       );
 
       results.push({

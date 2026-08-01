@@ -43,8 +43,42 @@ CREATE TABLE IF NOT EXISTS article_analyses (
     loaded_terms TEXT[],
     disclaimer TEXT,
     model TEXT NOT NULL,
+    embedding vector(1536),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- pgvector extension
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Vector index for cosine distance similarity search
+CREATE INDEX IF NOT EXISTS idx_article_analyses_embedding ON article_analyses USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+
+-- RPC Function to query related articles by vector similarity
+CREATE OR REPLACE FUNCTION match_related_articles(
+  target_article_id UUID,
+  target_embedding vector(1536),
+  match_count INT DEFAULT 5
+)
+RETURNS TABLE (
+  article_id UUID,
+  similarity FLOAT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    aa.article_id,
+    (1 - (aa.embedding <=> target_embedding))::FLOAT AS similarity
+  FROM article_analyses aa
+  JOIN articles a ON a.id = aa.article_id
+  WHERE aa.embedding IS NOT NULL
+    AND a.analyzed_at IS NOT NULL
+    AND aa.article_id != target_article_id
+  ORDER BY aa.embedding <=> target_embedding
+  LIMIT match_count;
+END;
+$$;
 
 -- 4. Logs table
 CREATE TABLE IF NOT EXISTS logs (

@@ -264,10 +264,9 @@ export async function getArticleById(id: string): Promise<ArticleWithAnalysis | 
 }
 
 /**
- * AGENTS.md Section 19 Rule:
+ * AGENTS.md Section 19 & 20 Rules:
  * Pending-analysis check — detect pending articles by LEFT JOINing articles to article_analyses.
- * Never rely on analyzed_at IS NULL alone.
- * An article is pending when no article_analyses row exists for it.
+ * An article is pending when no article_analyses row exists for it, OR when embedding IS NULL.
  */
 export async function getPendingAnalysisArticles(limit?: number): Promise<Article[]> {
   const supabase = createServiceRoleClient();
@@ -277,7 +276,7 @@ export async function getPendingAnalysisArticles(limit?: number): Promise<Articl
     .select(
       `
       *,
-      article_analyses!left(id)
+      article_analyses!left(id, embedding)
     `
     )
     .order('created_at', { ascending: false });
@@ -288,16 +287,18 @@ export async function getPendingAnalysisArticles(limit?: number): Promise<Articl
   }
 
   type JoinedArticleRow = Article & {
-    article_analyses?: { id: string } | Array<{ id: string }> | null;
+    article_analyses?: { id: string; embedding?: number[] | null } | Array<{ id: string; embedding?: number[] | null }> | null;
   };
 
   const rows = (data || []) as unknown as JoinedArticleRow[];
 
-  // Filter rows where article_analyses is null or empty
+  // Filter rows where article_analyses is null/empty OR embedding is missing
   const pending = rows.filter((art) => {
     const analyses = art.article_analyses;
     if (!analyses) return true;
-    if (Array.isArray(analyses) && analyses.length === 0) return true;
+    const item = Array.isArray(analyses) ? analyses[0] : analyses;
+    if (!item || !item.id) return true;
+    if (!item.embedding || item.embedding.length === 0) return true;
     return false;
   });
 
@@ -312,6 +313,8 @@ export async function getPendingAnalysisArticles(limit?: number): Promise<Articl
 
   return finalPending;
 }
+
+export { getRelatedArticles } from './queries/articles';
 
 // ==========================================
 // ARTICLE ANALYSES DATA ACCESS
