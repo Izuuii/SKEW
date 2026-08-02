@@ -251,6 +251,8 @@ export async function processScheduledResults(): Promise<ProcessScheduledResults
       };
       type OxylabsRunItem = {
         run_id?: string | number;
+        job_id?: string | number;
+        id?: string | number;
         jobs?: OxylabsJobItem[];
         result_status?: string;
         status?: string;
