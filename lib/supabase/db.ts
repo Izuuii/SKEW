@@ -426,7 +426,7 @@ export async function upsertSchedule(
 }
 
 export async function getActiveSchedules(): Promise<OxylabsSchedule[]> {
-  const supabase = createServerClient();
+  const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from('oxylabs_schedules')
     .select('*')
@@ -481,21 +481,25 @@ export async function recordScheduleRun(
   return data as OxylabsScheduleRun;
 }
 
-export async function updateScheduleRunStatus(
-  id: string,
-  status: string,
-  completedAt?: string
-): Promise<void> {
+export async function getExistingScheduleRunIds(runIds: string[]): Promise<Set<string>> {
+  if (!runIds.length) return new Set();
   const supabase = createServiceRoleClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('oxylabs_schedule_runs')
-    .update({
-      status,
-      completed_at: completedAt || new Date().toISOString(),
-    })
-    .eq('id', id);
+    .select('run_id')
+    .in('run_id', runIds);
 
   if (error) {
-    console.error('Error updating schedule run status:', error);
+    console.error('Error checking existing schedule run IDs:', error);
+    return new Set();
   }
+
+  const set = new Set<string>();
+  if (data) {
+    for (const row of data as Array<{ run_id: string | null }>) {
+      if (row.run_id) set.add(row.run_id);
+    }
+  }
+  return set;
 }
+
